@@ -487,6 +487,8 @@
     <div id="all-schedule-list" style="font-size:12px;line-height:1.8;"></div>
 </div>
 
+
+
 <div id="tab-utility" class="tab" style="display:none;">
     <div style="color:#ff3333;font-size:13px;font-weight:bold;margin-bottom:10px;">🔧 Другое</div>
 
@@ -2141,7 +2143,7 @@
     }
 
     function findQuestRewardButton() {
-        const REWARD_TEXTS = ['Забрать награду', 'Получить награду', 'Открыть'];
+        const REWARD_TEXTS = ['Забрать награду', 'Получить награду', 'Забрать'];
         return Array.from(document.querySelectorAll('a.btn, a, button'))
             .find(a => {
                 const text = (a.textContent || '').replace(/\s+/g, ' ').trim();
@@ -2297,13 +2299,16 @@
         }
 
         if (url.includes('/inv/chest')) {
+            // Сначала проверяем награду (Забрать награду / Получить награду)
             const rewardBtn = findQuestRewardButton();
             if (rewardBtn) {
+                console.log('[sage/chest] забираем награду');
                 forceClick(rewardBtn);
                 return true;
             }
 
-            // fallback: ищем кнопку Использовать на всей странице
+            // Ищем кнопку Использовать — сначала через стандартный поиск по .block_zero,
+            // затем fallback: любая ссылка /inv/chest/use/ на всей странице
             let elixirBtn = findElixirUseButton();
             if (!elixirBtn) {
                 elixirBtn = Array.from(document.querySelectorAll('a.btn, a'))
@@ -2317,15 +2322,19 @@
 
             if (elixirBtn) {
                 const last = parseInt(localStorage.getItem('fadd_sage_elixir_last') || '0', 10);
-                if (Date.now() - last > 1000) {
+                if (Date.now() - last > 2000) {
                     localStorage.setItem('fadd_sage_elixir_last', Date.now().toString());
                     console.log('[sage/chest] кликаем Использовать');
                     forceClick(elixirBtn);
+                    // Принудительно переходим по href если клик не сработал
+                    const href = elixirBtn.getAttribute('href');
+                    if (href) setTimeout(() => { window.location.href = href; }, 300);
                 }
                 return true;
             }
 
-            console.log('[sage/chest] кнопка Использовать не найдена — уходим на /quest/');
+            // Ничего не нашли — уходим на /quest/
+            console.log('[sage/chest] кнопки не найдены, уходим на /quest/');
             window.location.href = 'https://tiwar.ru/quest/';
             return true;
         }
@@ -4325,6 +4334,7 @@
         return false;
     }
 
+
     function initUtilityTab() {
         const statusEl = document.getElementById('utility-status');
 
@@ -4440,6 +4450,7 @@
             });
         }
     }
+
 
 
     // ── МУЗЫКАЛЬНЫЙ ПЛЕЕР ─────────────────────────────────────────────────────
